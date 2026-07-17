@@ -1,6 +1,10 @@
 # CrowdPilot-AI
 CrowdPilot AI is a Generative AI-powered smart stadium platform that enhances fan experience and tournament operations through AI assistance, predictive crowd management, interactive stadium mapping, accessibility support, multilingual guidance, emergency response, and real-time operational insights.
 
+## 🌐 Live Demo
+
+[Open CrowdPilot AI](https://sirenmh1.github.io/CrowdPilot-AI/)
+
 # 🏟️ CrowdPilot AI
 
 > **The Intelligence Layer Behind Every Matchday**
