@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrowdPilot AI Command Deck</title>
+  <meta name="description" content="CrowdPilot AI smart stadium command deck demo" />
+  <style>
+    :root{
+      --bg:#060913;
+      --bg2:#0b1220;
+      --panel:rgba(14,24,40,.78);
+      --panel2:rgba(20,34,55,.88);
+      --line:rgba(255,255,255,.08);
+      --text:#f5fbff;
+      --muted:#93a5b8;
+      --cyan:#5ce8db;
+      --blue:#6e9cff;
+      --green:#63e6a7;
+      --amber:#ffca62;
+      --red:#ff6877;
+      --purple:#a777ff;
+      --shadow:0 24px 70px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(92,232,219,.11), transparent 22%),
+        radial-gradient(circle at 82% 8%, rgba(110,156,255,.13), transparent 26%),
+        linear-gradient(145deg,#04070d,var(--bg));
+      overflow-x:hidden;
+    }
+    body.large-text{font-size:18px}
+    body.high-contrast{
+      --panel:#07101b;
+      --panel2:#0c1725;
+      --line:rgba(255,255,255,.25);
+      --muted:#d2deea;
+    }
+
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{
+      outline:3px solid var(--cyan);
+      outline-offset:3px;
+    }
+
+    .noise{
+      position:fixed;inset:0;pointer-events:none;opacity:.05;z-index:-1;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+    }
+
+    .app{
+      width:min(1540px,94vw);
+      margin:0 auto;
+      padding:18px 0 44px;
+    }
+
+    .topbar{
+      position:sticky;top:0;z-index:30;
+      display:grid;grid-template-columns:1fr auto 1fr;
+      align-items:center;gap:18px;
+      padding:14px 0;
+      backdrop-filter:blur(18px);
+      background:linear-gradient(to bottom,rgba(4,7,13,.95),rgba(4,7,13,.72));
+      border-bottom:1px solid var(--line);
+    }
+
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:46px;height:46px;border-radius:15px;display:grid;place-items:center;
+      font-weight:900;color:#041016;
+      background:linear-gradient(135deg,var(--cyan),var(--blue));
+      box-shadow:0 0 30px rgba(92,232,219,.25);
+    }
+    .brand strong,.brand span{display:block}
+    .brand span{font-size:11px;color:var(--muted);margin-top:3px}
+
+    .match-pill{
+      display:flex;align-items:center;gap:10px;
+      border:1px solid var(--line);background:rgba(255,255,255,.035);
+      padding:9px 14px;border-radius:999px;color:var(--muted);font-size:12px;
+    }
+    .match-pill strong{color:var(--text)}
+    .live-dot{
+      width:8px;height:8px;border-radius:50%;background:var(--green);
+      box-shadow:0 0 16px var(--green)
+    }
+
+    .top-actions{justify-self:end;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    select,.field,textarea{
+      border:1px solid var(--line);background:#0a1625;color:var(--text);
+      border-radius:11px;padding:10px 12px;
+    }
+
+    .ghost-btn,.danger-btn,.primary-btn,.soft-btn,.chip{
+      border:0;border-radius:11px;font-weight:800;
+    }
+    .ghost-btn{background:rgba(255,255,255,.06);color:var(--text);padding:10px 12px}
+    .danger-btn{background:linear-gradient(135deg,#e9304a,var(--red));color:#fff;padding:10px 14px}
+    .primary-btn{
+      background:linear-gradient(135deg,var(--cyan),var(--blue));
+      color:#031014;padding:11px 16px;
+    }
+    .soft-btn{
+      background:rgba(255,255,255,.055);color:var(--text);
+      border:1px solid var(--line);padding:11px 16px;
+    }
+
+    .hero{
+      display:grid;grid-template-columns:1.05fr .95fr;
+      gap:22px;align-items:stretch;padding:36px 0 20px;
+    }
+
+    .hero-card,.deck-card{
+      background:linear-gradient(180deg,rgba(18,31,50,.88),rgba(10,20,34,.85));
+      border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+    }
+
+    .hero-card{padding:32px;position:relative;overflow:hidden}
+    .hero-card::before{
+      content:"";position:absolute;inset:auto -80px -120px auto;width:280px;height:280px;
+      border-radius:50%;background:rgba(92,232,219,.08);filter:blur(25px);
+    }
+
+    .eyebrow{
+      color:var(--cyan);font-size:11px;font-weight:900;letter-spacing:.15em;
+    }
+    .hero h1{
+      margin:14px 0 16px;font-size:clamp(42px,6vw,86px);line-height:.96;letter-spacing:-.06em;
+      max-width:860px;
+    }
+    .hero p{color:var(--muted);font-size:18px;line-height:1.65;max-width:760px}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+    .badge{
+      display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;
+      background:rgba(92,232,219,.08);border:1px solid rgba(92,232,219,.22);
+      color:var(--cyan);font-size:11px;font-weight:900;letter-spacing:.08em;
+    }
+
+    .pulse-card{padding:24px;display:flex;flex-direction:column}
+    .pulse-head{display:flex;justify-content:space-between;align-items:center}
+    .pulse-head small{display:block;color:var(--muted)}
+    .pulse-head strong{display:block;margin-top:3px}
+    .orb{
+      width:20px;height:20px;border-radius:50%;background:var(--green);
+      box-shadow:0 0 0 8px rgba(99,230,167,.08),0 0 26px var(--green);
+    }
+
+    .mini-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:20px 0}
+    .mini-metrics div{
+      background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:15px;padding:16px;
+    }
+    .mini-metrics span{display:block;color:var(--muted);font-size:12px}
+    .mini-metrics strong{display:block;font-size:28px;margin-top:7px}
+    .ai-forecast{
+      padding:14px;border-left:3px solid var(--amber);background:rgba(255,202,98,.08);
+      border-radius:10px;color:var(--text);line-height:1.5
+    }
+    .ai-forecast small{display:block;color:var(--amber);font-weight:900;margin-bottom:4px}
+
+    .metric-strip{
+      display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:12px 0 20px;
+    }
+    .metric{
+      padding:16px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:16px;
+    }
+    .metric span,.metric small{display:block;color:var(--muted)}
+    .metric strong{display:block;font-size:24px;margin:6px 0 2px}
+    .metric small{font-size:11px}
+
+    .deck{
+      display:grid;grid-template-columns:1.2fr .8fr;gap:14px;
+    }
+    .deck-card{padding:22px}
+    .card-head{display:flex;justify-content:space-between;align-items:center;gap:16px}
+    .card-head h2,.card-head h3{margin:5px 0 0}
+    .muted{color:var(--muted)}
+
+    .stadium-wrap{
+      position:relative;height:520px;margin-top:18px;overflow:hidden;
+      border-radius:28px;border:1px solid var(--line);
+      background:
+        linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.02)),
+        repeating-linear-gradient(90deg,transparent 0 39px,rgba(255,255,255,.025) 40px),
+        repeating-linear-gradient(0deg,transparent 0 39px,rgba(255,255,255,.025) 40px),
+        #081522;
+    }
+
+    .stadium{
+      position:absolute;inset:7%;
+      border:34px solid #16304b;border-radius:46%;
+      background:#0b1b2c;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),inset 0 0 60px rgba(0,0,0,.35);
+    }
+    .pitch{
+      position:absolute;inset:23% 24%;
+      border:2px solid rgba(255,255,255,.45);
+      background:repeating-linear-gradient(90deg,#247149 0 13%,#2e7e53 13% 26%);
+    }
+    .half{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45)}
+    .circle{
+      position:absolute;left:50%;top:50%;width:72px;height:72px;border:2px solid rgba(255,255,255,.45);
+      border-radius:50%;transform:translate(-50%,-50%);
+    }
+
+    .zone{
+      position:absolute;z-index:5;width:58px;height:58px;border-radius:50%;border:0;
+      display:grid;place-items:center;color:white;font-weight:900;box-shadow:0 0 26px currentColor;
+      transition:.2s ease;
+    }
+    .zone:hover{transform:scale(1.08)}
+    .za{top:4%;left:calc(50% - 29px);background:var(--red)}
+    .zb{right:4%;top:calc(50% - 29px);background:var(--blue)}
+    .zc{bottom:4%;left:calc(50% - 29px);background:var(--amber);color:#2d2100}
+    .zd{left:4%;top:calc(50% - 29px);background:var(--green);color:#042015}
+
+    .heat{position:absolute;border-radius:50%;filter:blur(22px);opacity:.56}
+    .h1{width:150px;height:120px;top:0;left:34%;background:var(--red)}
+    .h2{width:120px;height:120px;right:0;top:38%;background:var(--amber)}
+    .h3{width:120px;height:90px;left:8%;bottom:2%;background:var(--green)}
+
+    .zone-panel{
+      position:absolute;left:18px;right:18px;bottom:18px;display:flex;justify-content:space-between;gap:18px;
+      padding:14px 16px;border-radius:14px;background:rgba(3,10,18,.78);border:1px solid var(--line);backdrop-filter:blur(12px)
+    }
+    .zone-panel span{color:var(--muted);text-align:right}
+
+    .alerts{display:flex;flex-direction:column;gap:11px;margin-top:16px}
+    .alert{
+      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;
+      padding:14px;border-radius:15px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+    }
+    .alert.high{border-color:rgba(255,104,119,.28)}
+    .icon{
+      width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:900;
+      background:rgba(255,202,98,.1);color:var(--amber)
+    }
+    .alert p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+    .alert time{color:var(--muted);font-size:11px}
+    .action-btn{
+      margin-top:10px;border:0;background:transparent;color:var(--cyan);padding:0;font-weight:800
+    }
+    .plan{
+      margin-top:14px;padding:14px;border:1px solid rgba(92,232,219,.18);
+      background:rgba(92,232,219,.07);border-radius:14px;line-height:1.55
+    }
+
+    .assistant-section{
+      display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px
+    }
+    .chat{display:flex;flex-direction:column;min-height:560px}
+    .chat-log{
+      flex:1;min-height:360px;max-height:460px;overflow:auto;display:flex;flex-direction:column;gap:10px;
+      padding:6px 2px 18px;
+    }
+    .msg{
+      max-width:82%;padding:13px 15px;border-radius:15px;line-height:1.5
+    }
+    .msg.ai{background:rgba(110,156,255,.11);border:1px solid rgba(110,156,255,.18)}
+    .msg.user{align-self:flex-end;background:rgba(92,232,219,.11);border:1px solid rgba(92,232,219,.18)}
+    .msg small{display:block;color:var(--cyan);margin-top:8px}
+    .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+    .chip{
+      background:transparent;border:1px solid var(--line);color:var(--muted);
+      padding:8px 10px;border-radius:999px;
+    }
+    .chat-form{display:grid;grid-template-columns:auto 1fr auto;gap:8px}
+    .field{min-width:0}
+
+    .side-stack{display:grid;gap:14px}
+    .context-list,.status-list{display:grid;gap:9px;margin-top:14px}
+    .context-list div,.status-list div{
+      display:flex;justify-content:space-between;gap:12px;padding:11px 12px;
+      background:rgba(255,255,255,.03);border-radius:11px;
+    }
+    .context-list span,.status-list span{color:var(--muted)}
+    .green{color:var(--green)} .amber{color:var(--amber)} .red{color:var(--red)}
+
+    .tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+    .tool-card textarea{width:100%;min-height:100px;margin-top:12px;resize:vertical}
+    .tool-card select,.tool-card input{width:100%;margin-top:9px}
+    .output{
+      margin-top:12px;padding:13px;border-radius:12px;background:rgba(255,255,255,.035);
+      border:1px solid var(--line);line-height:1.55
+    }
+    .hidden{display:none!important}
+
+    .modal{
+      position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;
+      background:rgba(0,0,0,.74);backdrop-filter:blur(8px)
+    }
+    .modal-card{
+      width:min(520px,100%);background:#0d1a2a;border:1px solid rgba(255,104,119,.3);
+      border-radius:22px;padding:26px;box-shadow:var(--shadow);position:relative
+    }
+    .close{position:absolute;right:15px;top:12px;border:0;background:transparent;color:var(--muted);font-size:28px}
+
+    .toast{
+      position:fixed;right:20px;bottom:20px;z-index:120;
+      background:#14283f;border:1px solid var(--line);padding:13px 16px;border-radius:12px;
+      box-shadow:var(--shadow)
+    }
+
+    footer{padding:30px 0;text-align:center;color:var(--muted);font-size:12px}
+
+    @media(max-width:1120px){
+      .topbar{grid-template-columns:1fr auto}.match-pill{display:none}
+      .metric-strip{grid-template-columns:repeat(3,1fr)}
+      .tool-grid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:860px){
+      .topbar{position:static;grid-template-columns:1fr}.top-actions{justify-self:stretch}
+      .hero,.deck,.assistant-section{grid-template-columns:1fr}
+      .tool-grid{grid-template-columns:1fr}
+      .stadium-wrap{height:420px}
+    }
+    @media(max-width:560px){
+      .app{width:95vw}.hero-card,.pulse-card,.deck-card{padding:18px}
+      .hero h1{font-size:48px}
+      .metric-strip{grid-template-columns:1fr 1fr}
+      .chat-form{grid-template-columns:1fr}
+      .stadium-wrap{height:320px}
+      .stadium{border-width:22px}
+      .zone{width:44px;height:44px}
+      .za{left:calc(50% - 22px)}.zb{top:calc(50% - 22px)}.zc{left:calc(50% - 22px)}.zd{top:calc(50% - 22px)}
+      .zone-panel{flex-direction:column}.zone-panel span{text-align:left}
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">CP</div>
+        <div>
+          <strong>CrowdPilot AI</strong>
+          <span>Command Deck</span>
+        </div>
+      </div>
+
+      <div class="match-pill">
+        <span class="live-dot"></span>
+        <strong>Brazil vs Spain</strong>
+        <span>Kickoff 21:00</span>
+      </div>
+
+      <div class="top-actions">
+        <select id="role">
+          <option>Fan</option>
+          <option>Volunteer</option>
+          <option>Staff</option>
+          <option>Organizer</option>
+        </select>
+        <select id="language">
+          <option>English</option>
+          <option>Hindi</option>
+          <option>Spanish</option>
+          <option>Arabic</option>
+          <option>Portuguese</option>
+        </select>
+        <button id="contrastBtn" class="ghost-btn">◐</button>
+        <button id="textBtn" class="ghost-btn">Aa</button>
+        <button id="emergencyBtn" class="danger-btn">Emergency</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <article class="hero-card">
+        <span class="badge">✦ GENAI STADIUM INTELLIGENCE</span>
+        <h1>The command deck behind every safer matchday.</h1>
+        <p>
+          CrowdPilot AI transforms live crowd, transport, accessibility, and venue data
+          into clear fan guidance and instant organizer action plans.
+        </p>
+        <div class="hero-actions">
+          <button class="primary-btn" onclick="document.querySelector('#deck').scrollIntoView()">Open Command Deck</button>
+          <button class="soft-btn" onclick="document.querySelector('#assistant').scrollIntoView()">Ask CrowdPilot</button>
+        </div>
+      </article>
+
+      <article class="pulse-card hero-card">
+        <div class="pulse-head">
+          <div>
+            <small>AI OPERATIONAL PULSE</small>
+            <strong>Stadium running smoothly</strong>
+          </div>
+          <div class="orb"></div>
+        </div>
+        <div class="mini-metrics">
+          <div><span>Fans inside</span><strong>64,280</strong></div>
+          <div><span>Volunteers active</span><strong>284</strong></div>
+          <div><span>Average wait</span><strong>7.8m</strong></div>
+          <div><span>Live alerts</span><strong>3</strong></div>
+        </div>
+        <div class="ai-forecast">
+          <small>AI FORECAST</small>
+          Gate A may exceed its comfort threshold in 8 minutes.
+        </div>
+      </article>
+    </section>
+
+    <section class="metric-strip">
+      <div class="metric"><span>Capacity</span><strong>78%</strong><small>Normal operating range</small></div>
+      <div class="metric"><span>Incidents</span><strong>3</strong><small>1 high priority</small></div>
+      <div class="metric"><span>Medical</span><strong>2</strong><small>Both assigned</small></div>
+      <div class="metric"><span>Transport</span><strong>+6m</strong><small>Blue Line delay</small></div>
+      <div class="metric"><span>Energy</span><strong>71%</strong><small>Within target</small></div>
+      <div class="metric"><span>Recycling</span><strong>76%</strong><small>Above baseline</small></div>
+    </section>
+
+    <section id="deck" class="deck">
+      <article class="deck-card">
+        <div class="card-head">
+          <div>
+            <span class="eyebrow">LIVE DIGITAL TWIN</span>
+            <h2>Stadium crowd map</h2>
+          </div>
+          <span class="muted">Green low • Amber medium • Red high</span>
+        </div>
+
+        <div class="stadium-wrap">
+          <div class="stadium">
+            <div class="heat h1"></div>
+            <div class="heat h2"></div>
+            <div class="heat h3"></div>
+            <button class="zone za" data-zone="Gate A" data-info="82% crowded • 14 min wait • High risk • Redirect fans to Gate D">A</button>
+            <button class="zone zb" data-zone="Gate B" data-info="39% crowded • 5 min wait • Low risk • Maintain staffing">B</button>
+            <button class="zone zc" data-zone="Gate C" data-info="61% crowded • 9 min wait • Medium risk • Add one volunteer">C</button>
+            <button class="zone zd" data-zone="Gate D" data-info="25% crowded • 3 min wait • Best option • Recommend to incoming fans">D</button>
+            <div class="pitch">
+              <div class="half"></div>
+              <div class="circle"></div>
+            </div>
+          </div>
+          <div class="zone-panel" id="zonePanel">
+            <strong>Select a gate</strong>
+            <span>Click any glowing zone for operational details.</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="deck-card">
+        <div class="card-head">
+          <div>
+            <span class="eyebrow">PREDICTIVE ALERTS</span>
+            <h3>What needs attention</h3>
+          </div>
+        </div>
+
+        <div class="alerts">
+          <div class="alert high">
+            <div class="icon">!</div>
+            <div>
+              <strong>Gate A congestion predicted</strong>
+              <p>Comfort threshold may be exceeded in 8 minutes.</p>
+              <button id="responseBtn" class="action-btn">Generate response plan</button>
+            </div>
+            <time>Now</time>
+          </div>
+
+          <div class="alert">
+            <div class="icon">↗</div>
+            <div>
+              <strong>Stall 9 stock risk</strong>
+              <p>Water inventory may run low in 17 minutes.</p>
+            </div>
+            <time>2m</time>
+          </div>
+
+          <div class="alert">
+            <div class="icon">M</div>
+            <div>
+              <strong>Metro delay detected</strong>
+              <p>Blue Line delayed by approximately 6 minutes.</p>
+            </div>
+            <time>4m</time>
+          </div>
+        </div>
+
+        <div id="plan" class="plan hidden"></div>
+      </article>
+    </section>
+
+    <section id="assistant" class="assistant-section">
+      <article class="deck-card chat">
+        <div class="card-head">
+          <div>
+            <span class="eyebrow">GENERATIVE AI ASSISTANT</span>
+            <h2>Ask CrowdPilot</h2>
+          </div>
+          <span class="badge">DEMO MODE</span>
+        </div>
+
+        <div id="chatLog" class="chat-log">
+          <div class="msg ai">
+            Hi! Ask me about gates, food, accessible routes, medical help, transport,
+            queues, or volunteer tasks.
+          </div>
+        </div>
+
+        <div class="quick">
+          <button class="chip" data-q="Which gate has the shortest wait?">Fastest gate</button>
+          <button class="chip" data-q="Where is the nearest accessible washroom?">Accessible route</button>
+          <button class="chip" data-q="I need vegetarian food before kickoff.">Vegetarian food</button>
+          <button class="chip" data-q="My metro is delayed. What should I do?">Transport help</button>
+        </div>
+
+        <form id="chatForm" class="chat-form">
+          <select id="location">
+            <option>Section C, Row 18</option>
+            <option>Gate A</option>
+            <option>Gate B</option>
+            <option>Gate C</option>
+            <option>Gate D</option>
+          </select>
+          <input id="chatInput" class="field" placeholder="Ask a stadium question..." maxlength="400" required />
+          <button class="primary-btn" type="submit">Ask AI</button>
+        </form>
+      </article>
+
+      <div class="side-stack">
+        <article class="deck-card">
+          <span class="eyebrow">LIVE CONTEXT</span>
+          <h3>What the AI knows</h3>
+          <div class="context-list">
+            <div><span>Best gate</span><strong class="green">Gate D • 3m</strong></div>
+            <div><span>Accessible washroom</span><strong>C-12</strong></div>
+            <div><span>Vegetarian food</span><strong>Stall 14</strong></div>
+            <div><span>Medical desk</span><strong>C-08</strong></div>
+            <div><span>Metro</span><strong class="amber">Blue Line +6m</strong></div>
+          </div>
+          <button id="speakBtn" class="soft-btn" style="width:100%;margin-top:14px">Read last AI reply</button>
+        </article>
+
+        <article class="deck-card">
+          <span class="eyebrow">TRANSPORT STATUS</span>
+          <h3>Best post-match options</h3>
+          <div class="status-list">
+            <div><span>Shuttle Route 2</span><strong class="green">On time</strong></div>
+            <div><span>Taxi Zone East</span><strong>12 min</strong></div>
+            <div><span>Parking P3</span><strong class="red">91% full</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="tool-grid">
+      <article class="deck-card tool-card">
+        <span class="eyebrow">VOLUNTEER COPILOT</span>
+        <h3>Explain my next task</h3>
+        <p class="muted">Assigned zone: Gate A • Shift progress: 62%</p>
+        <button id="taskBtn" class="primary-btn">Explain task</button>
+        <div id="taskOutput" class="output hidden"></div>
+      </article>
+
+      <article class="deck-card tool-card">
+        <span class="eyebrow">INCIDENT REPORT</span>
+        <h3>Generate a clean summary</h3>
+        <select id="incidentType">
+          <option>Lost person</option>
+          <option>Medical request</option>
+          <option>Crowd congestion</option>
+          <option>Facility issue</option>
+        </select>
+        <input id="incidentLocation" placeholder="Location, e.g. Section B" />
+        <textarea id="incidentDesc" placeholder="Describe what happened..."></textarea>
+        <button id="incidentBtn" class="primary-btn">Generate report</button>
+        <div id="incidentOutput" class="output hidden"></div>
+      </article>
+
+      <article class="deck-card tool-card">
+        <span class="eyebrow">ANNOUNCEMENT GENERATOR</span>
+        <h3>Create a calm multilingual message</h3>
+        <textarea id="announcementText" placeholder="Example: Gate A is crowded. Ask fans to use Gate D."></textarea>
+        <select id="announcementLang">
+          <option>English</option>
+          <option>Hindi</option>
+          <option>Spanish</option>
+          <option>Arabic</option>
+          <option>Portuguese</option>
+        </select>
+        <button id="announcementBtn" class="primary-btn">Generate announcement</button>
+        <div id="announcementOutput" class="output hidden"></div>
+      </article>
+    </section>
+
+    <footer>CrowdPilot AI • Hackathon MVP • Simulated operational data</footer>
+  </div>
+
+  <div id="emergencyModal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeModal" class="close">×</button>
+      <span class="eyebrow red">EMERGENCY SUPPORT</span>
+      <h2>Get help now</h2>
+      <p>Nearest medical desk: <strong>C-08, approximately 4 minutes away.</strong></p>
+      <p>Nearest exit: <strong>Exit C-East.</strong></p>
+      <p>Contact nearby stadium staff immediately. AI does not replace emergency services.</p>
+      <button class="danger-btn" style="width:100%">Share Section C location</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const state = { lastReply: "" };
+    const toast = document.getElementById("toast");
+
+    function showToast(text){
+      toast.textContent = text;
+      toast.classList.remove("hidden");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(()=>toast.classList.add("hidden"),2200);
+    }
+
+    document.querySelectorAll(".zone").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.getElementById("zonePanel").innerHTML =
+          `<strong>${btn.dataset.zone}</strong><span>${btn.dataset.info}</span>`;
+      });
+    });
+
+    document.getElementById("responseBtn").addEventListener("click",()=>{
+      const plan = document.getElementById("plan");
+      plan.innerHTML = `
+        <strong>AI response plan</strong><br>
+        1. Redirect incoming fans toward Gate D.<br>
+        2. Deploy two volunteers to Gate A.<br>
+        3. Publish multilingual rerouting messages.<br>
+        4. Recheck density after five minutes.
+      `;
+      plan.classList.remove("hidden");
+      showToast("Response plan generated");
+    });
+
+    function getReply(q){
+      const s = q.toLowerCase();
+      const location = document.getElementById("location").value;
+      const role = document.getElementById("role").value;
+
+      if(s.includes("gate") || s.includes("queue")){
+        return ["Gate D is currently the best option with an estimated 3-minute wait. Avoid Gate A, which is nearing a congestion threshold.","Action: Use Gate D • Priority: High"];
+      }
+      if(s.includes("washroom") || s.includes("toilet")){
+        return [`The nearest accessible washroom is C-12. From ${location}, it is approximately a 3-minute walk with a 2-minute queue.`,`Location: C-12 • Estimated time: 5 minutes`];
+      }
+      if(s.includes("vegetarian") || s.includes("food")){
+        return ["Vegetarian Stall 14 is a 2-minute walk away with an estimated 4-minute queue. You should be back before kickoff.","Action: Route to Stall 14 • Time: 6 minutes"];
+      }
+      if(s.includes("medical") || s.includes("hurt")){
+        return ["The nearest medical desk is C-08, about 4 minutes away. For urgent help, contact nearby stadium staff immediately.","Location: C-08 • Priority: Urgent"];
+      }
+      if(s.includes("metro") || s.includes("transport") || s.includes("parking") || s.includes("taxi")){
+        return ["The Blue Metro Line is delayed by 6 minutes. Shuttle Route 2 is on time and is currently the smoother option.","Action: Use Shuttle Route 2 • Priority: Normal"];
+      }
+      if(s.includes("elderly") || s.includes("wheelchair") || s.includes("accessible")){
+        return ["Use the low-walking inner concourse route. It avoids stairs, passes the lift near C-10, and reaches the accessible washroom at C-12.","Accessibility route • Estimated walk: 3 minutes"];
+      }
+      if(s.includes("volunteer") || role==="Volunteer"){
+        return ["Move to Gate A, support calm crowd redirection, guide families toward Gate D, and report crowd levels again after five minutes.","Assigned zone: Gate A • Priority: High"];
+      }
+      return [`As a ${role}, I can help with gates, seating, food, accessibility, medical support, transport, and stadium operations. Try asking which gate is fastest.`,`Using simulated live stadium context`];
+    }
+
+    function addMsg(text,type,meta=""){
+      const el=document.createElement("div");
+      el.className=`msg ${type}`;
+      el.textContent=text;
+      if(meta){
+        const small=document.createElement("small");
+        small.textContent=meta;
+        el.appendChild(small);
+      }
+      const log=document.getElementById("chatLog");
+      log.appendChild(el);
+      log.scrollTop=log.scrollHeight;
+    }
+
+    async function ask(q){
+      const clean=q.trim();
+      if(!clean)return;
+      addMsg(clean,"user");
+      const input=document.getElementById("chatInput");
+      input.value="";
+      input.disabled=true;
+      const loading=document.createElement("div");
+      loading.className="msg ai";
+      loading.textContent="CrowdPilot is checking stadium context...";
+      document.getElementById("chatLog").appendChild(loading);
+
+      await new Promise(r=>setTimeout(r,650));
+      loading.remove();
+      const [reply,meta]=getReply(clean);
+      addMsg(reply,"ai",meta);
+      state.lastReply=reply;
+      input.disabled=false;
+      input.focus();
+    }
+
+    document.getElementById("chatForm").addEventListener("submit",e=>{
+      e.preventDefault();ask(document.getElementById("chatInput").value);
+    });
+    document.querySelectorAll("[data-q]").forEach(b=>b.addEventListener("click",()=>ask(b.dataset.q)));
+
+    document.getElementById("speakBtn").addEventListener("click",()=>{
+      if(!state.lastReply)return showToast("Ask CrowdPilot something first");
+      if(!("speechSynthesis" in window))return showToast("Text-to-speech is unavailable");
+      speechSynthesis.cancel();
+      speechSynthesis.speak(new SpeechSynthesisUtterance(state.lastReply));
+    });
+
+    document.getElementById("taskBtn").addEventListener("click",()=>{
+      const out=document.getElementById("taskOutput");
+      out.innerHTML="<strong>Your next task</strong><br>Walk to Gate A, stand near the family lane, calmly guide fans toward Gate D, and update the control room after five minutes.";
+      out.classList.remove("hidden");
+    });
+
+    document.getElementById("incidentBtn").addEventListener("click",()=>{
+      const type=document.getElementById("incidentType").value;
+      const loc=document.getElementById("incidentLocation").value.trim()||"the selected zone";
+      const desc=document.getElementById("incidentDesc").value.trim()||"A staff member reported the situation.";
+      const out=document.getElementById("incidentOutput");
+      out.innerHTML=`<strong>Generated incident report</strong><br>Type: ${type}<br>Location: ${loc}<br>Summary: ${desc}<br>Next step: Notify the zone supervisor and assign the nearest available staff member.`;
+      out.classList.remove("hidden");
+    });
+
+    const translations={
+      Hindi:"कृपया ध्यान दें: गेट A पर भीड़ अधिक है। तेज़ प्रवेश के लिए गेट D का उपयोग करें।",
+      Spanish:"Atención: la Puerta A está congestionada. Utilice la Puerta D para una entrada más rápida.",
+      Arabic:"يرجى الانتباه: البوابة A مزدحمة. استخدموا البوابة D لدخول أسرع.",
+      Portuguese:"Atenção: o Portão A está congestionado. Utilize o Portão D para uma entrada mais rápida."
+    };
+    document.getElementById("announcementBtn").addEventListener("click",()=>{
+      const lang=document.getElementById("announcementLang").value;
+      const text=lang==="English"
+        ?"Attention please: Gate A is currently crowded. For faster entry, kindly use Gate D."
+        :translations[lang];
+      const out=document.getElementById("announcementOutput");
+      out.innerHTML=`<strong>Public announcement</strong><br>${text}<br><br><strong>Display-board version</strong><br>Gate A busy • Use Gate D`;
+      out.classList.remove("hidden");
+    });
+
+    document.getElementById("contrastBtn").addEventListener("click",()=>{
+      document.body.classList.toggle("high-contrast");
+      showToast("Contrast mode toggled");
+    });
+    document.getElementById("textBtn").addEventListener("click",()=>{
+      document.body.classList.toggle("large-text");
+      showToast("Text size toggled");
+    });
+
+    const modal=document.getElementById("emergencyModal");
+    document.getElementById("emergencyBtn").addEventListener("click",()=>modal.classList.remove("hidden"));
+    document.getElementById("closeModal").addEventListener("click",()=>modal.classList.add("hidden"));
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.add("hidden")});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")modal.classList.add("hidden")});
+  </script>
+</body>
+</html>
